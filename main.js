@@ -50,9 +50,9 @@ function saveJson(info,dir){
    
     const jsonFild =  JSON.stringify(info) //json 파일로 변환후
     
-    const name = '/mangaInfo.json' 
+    const name = '/mangaInfo.json' //이름 지정
 
-    fs.writeFile(dir+name, jsonFild,(err,result)=>{
+    fs.writeFile(dir+name, jsonFild,(err,result)=>{ // writeFile 사용하여 json 파일 만들기
         if(err) console.log('errer',err)
     });
 }
