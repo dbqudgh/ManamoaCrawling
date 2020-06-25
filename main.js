@@ -118,6 +118,7 @@ function rtManaGaInfo(options){
 
     let info = {} 
     
+    
     options.uri = url // options 에 uri 값을 url 값으로 변경해줌
 
         return new Promise(resolve=>{ // 비동기사용하여 info return
