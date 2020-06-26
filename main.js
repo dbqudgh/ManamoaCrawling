@@ -198,22 +198,41 @@ function changeUrl(url,id){//main Url + subUrl
 
 //img function
 //이미지 관련함수들 나중에 추후 추가해주자
-function imgsDownload({mainDir,title,chapterList,imgs,i,url}){ // 이미지 다운로드 함수
+function imgsDownload({mainDir,title,chapterList,imgs,i,url,cdnList}){ // 이미지 다운로드 함수
 
     const savedirList = `${mainDir}/${title}/${chapterList[i]}`
+
 
     if(!fs.existsSync(savedirList)){
         fs.mkdirSync(savedirList)
     }
 
-    for(let c = 0; c < imgs.length; c++){
-        let changedImg = imgs[c].split('"')[1]
-        changedImg = changedImg.replace(/\\/g, "")
-        down(savedirList,changedImg,chapterList[i],c,url,5)
-    }
 
     
-}
+
+        for(let c = 0; c < imgs.length; c++){
+
+            let changedImg = imgs[c].split('"')[1]+'?quick'
+            changedImg = changedImg.replace(/\\/g, "")
+
+            const chk = new RegExp("filecdn.xyz");
+
+            if(chk.test(changedImg)){
+              changedImg = changedImg.replace(chk,cdnList[c]).replace('"','').replace('"','')
+            }
+
+            down(savedirList,changedImg,chapterList[i],c,url,5)
+
+        }
+
+
+    }
+
+
+
+
+    
+
 
 
 function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
@@ -241,21 +260,19 @@ function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
         
                     if(body.split('var img_list = ')[1]){
                         
-                        const chk = new RegExp("filecdn");
-
                         let imgs = body.split('var img_list = ')[1].split(';')[0].split(','); // var img_list 추출
+                        let cdnList = body.split('var cdn_domains =')[1].split(';')[0].split(',')
+                    
                         
 
-                        if(chk.test(imgs)){ //filecdn이 있다면 list1 에서 링크를 찾아줌
-                            imgs = body.split('var img_list1 = ')[1].split(';')[0].split(','); 
-                        }
                         
                             imgsDownload({mainDir
                                 ,title,
                                 chapterList,
                                 imgs
                                 ,i
-                                ,url})
+                                ,url
+                                ,cdnList})
                     }
     
                 })
