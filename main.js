@@ -24,6 +24,7 @@ const subUrl = `https://manamoa${number}.net/bbs/page.php?hid=manga_detail&manga
 const viewUrl = `https://manamoa${number}.net/bbs/board.php?bo_table=manga&wr_id=${id}`
     
 
+
 //main directory
 const mainDir = 'D:/만화'
 
