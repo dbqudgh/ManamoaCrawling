@@ -4,16 +4,25 @@ const filenamify = require("filenamify");
 const cheerio = require("cheerio");
 const fs = require('fs');
 const replace = require("./lib/replace");
-
+const { down } = require("./lib/down")
 
 //mana숫자 < 숫자부분 주기적으로 바꿔줘야하니 나중에 숫자만 입력할수있도록 바꿔줘야함
-let number = '48'
+let number = '49'
+
+// 중요한 아이디값 일단 기본적으로 정해둠
+let id = '1748'
+
+//사용자가 원하는 다운로드 딜레이 속도 지정  컴퓨터 속도에 따라서 바꿔줌
+let DOWNLOAD_SPEED = 3;
+
 
 //첫주소
 const mainUrl = `https://manamoa${number}.net/`
-
-// 중요한 아이디값 일단 기본적으로 정해둠
-let id = '14940'
+//만화 메인 주소 url number 이랑 id로 구분해주면 될것같음
+const subUrl = `https://manamoa${number}.net/bbs/page.php?hid=manga_detail&manga_id=${id}` 
+//만화 이미지 뷰 링크 마찬가지 nubmer id 구분해주기
+const viewUrl = `https://manamoa${number}.net/bbs/board.php?bo_table=manga&wr_id=${id}`
+    
 
 //main directory
 const mainDir = 'D:/만화'
@@ -73,7 +82,7 @@ function rtList(option){
     const $tag = option.$tag
     const title = option.title*/ 
     
-    //비구조화 활당 es6 문법 정말 정말 좋다
+    //비구조화 할당 es6 문법 정말 정말 좋다
     const { $,$chapterList,$id,$tag,title } = option
     //$,홧수제목,id,태그,제목
 
@@ -111,18 +120,18 @@ function rtList(option){
 //request안에서 만화정보 보네기
 function rtManaGaInfo(options){
 
-    //url number 이랑 id로 구분해주면 될것같음
-    const subUrl = `https://manamoa${number}.net/bbs/page.php?hid=manga_detail&manga_id=${id}` 
-    
-    const url = changeUrl(mainUrl,subUrl) // chnageUrl 사용하여 url 변경
+    const url = changeUrl(subUrl,id) // chnageUrl 사용하여 url 변경
 
     let info = {} 
     
-    
+
     options.uri = url // options 에 uri 값을 url 값으로 변경해줌
 
         return new Promise(resolve=>{ // 비동기사용하여 info return
+
             request(options,(err,response,body)=>{ 
+
+                if(err) console.log(err)
         
                 //만약 에러나면
                 if(err) console.log('err',err)
@@ -146,7 +155,7 @@ function rtManaGaInfo(options){
                     title:title //
                 }
                 
-                const list = rtList(option)//
+                const list = rtList(option)
             
 
                 info = {
@@ -166,26 +175,101 @@ function rtManaGaInfo(options){
 
 
 //Url을 다른url로 chnage 
-//나중에 아이디값으로 바꿔버리자
+//나중에 아이디값으로 바꿔버리자 ex) id = 1000
 //chnageUrlId<<이름으로
-function changeUrl(mainUrl,subUrl){//main Url + subUrl
+function changeUrl(url,id){//main Url + subUrl
     
-    subUrl = subUrl.split(mainUrl)[1] // subUrl에서 앞부분 스플릿해준다음 더해줌
     
-    const url = `${mainUrl}/${subUrl}` //뒷 url 합처줌
-    
-    return  url; 
+    if(url.split('id=').length > 2){ //메인 만화 링크일때
+        
+        url = url.split('manga_id=')[0]
+        url = url+'manga_id='+id
+
+    }else{ //일반링크일때 
+        url = url.split('id=')[0]
+        url = url+'id='+id
+    }
+
+    return url
 
 }
 
 
 //img function
 //이미지 관련함수들 나중에 추후 추가해주자
-function imgsDownload(){ // 이미지 다운로드 함수
+function imgsDownload({mainDir,title,chapterList,imgs,i,url}){ // 이미지 다운로드 함수
+
+    const savedirList = `${mainDir}/${title}/${chapterList[i]}`
+
+    if(!fs.existsSync(savedirList)){
+        fs.mkdirSync(savedirList)
+    }
+
+    for(let c = 0; c < imgs.length; c++){
+        let changedImg = imgs[c].split('"')[1]
+        changedImg = changedImg.replace(/\\/g, "")
+        down(savedirList,changedImg,chapterList[i],c,url,5)
+    }
+
     
 }
 
-function imgsLoad(info){// 이미지들을 불러와주는함수
+
+function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
+
+    //list:chapterList ids tag
+    const title = filenamify(info.title) //제목
+
+    const chapterCount = info.chapterCount //총홧수
+    
+    const chapterList = info.list.chapters //홧수제목
+    const ids = info.list.ids // 아이디값들
+
+
+        for(let i = 0; i < ids.length; i++){
+        
+            setTimeout(()=>{
+                const id = ids[i]
+                const url = changeUrl(viewUrl,id)
+            
+                options.uri = url
+        
+                request(options,(err,response,body)=>{
+                    
+                    if(err) console.log(err)
+        
+                    if(body.split('var img_list = ')[1]){
+                        
+                        const chk = new RegExp("filecdn");
+
+                        let imgs = body.split('var img_list = ')[1].split(';')[0].split(','); // var img_list 추출
+                        
+
+                        if(chk.test(imgs)){ //filecdn이 있다면 list1 에서 링크를 찾아줌
+                            imgs = body.split('var img_list1 = ')[1].split(';')[0].split(','); 
+                        }
+                        
+                            imgsDownload({mainDir
+                                ,title,
+                                chapterList,
+                                imgs
+                                ,i
+                                ,url})
+                    }
+    
+                })
+            },DOWNLOAD_SPEED*500*i)
+    
+        }
+}
+
+
+//json 파일을 읽는 함수 추후 추가 해주자
+function loadJson(){
+
+    // const jsonFileName = 'managInfo.json'
+
+    // fs.readFileSync(jsonFileName)
 
 }
 
@@ -195,7 +279,7 @@ async function init(){
     try{
         const info = await rtManaGaInfo(options) // 만화정보를 리턴해줌
         await createdJson(info) // 그걸사용하여 json 파일에 정보 담아주기
-
+        await imgsLoad(info,options,mainDir)// 정보와 request 옵션과 디렉토리 정보를 줍시다.
 
     }
     catch(err){
