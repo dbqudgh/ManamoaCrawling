@@ -283,12 +283,14 @@ function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
 
 
 //json 파일을 읽는 함수 추후 추가 해주자
-function loadJson(){
+function loadJson(PATH){
 
-    // const jsonFileName = 'managInfo.json'
+    const name = `/mangaInfo.json`
 
-    // fs.readFileSync(jsonFileName)
+    const jsonfileDir = PATH+name
 
+    return JSON.parse(fs.readFileSync(jsonfileDir,'utf-8'))
+    
 }
 
 // function init()
