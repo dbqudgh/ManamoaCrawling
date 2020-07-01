@@ -22,5 +22,13 @@ puppeteer 은 컴퓨터 성능도 많이 잡아먹고 느리다 더욱빠르게 
 함수 명 바꿔줌
 
 <br><br><br>
+2020-07-01
+testMain 에 오류 처리 추가
+주석 설명 추가
+saveJson 함수 name 인자 추가
+
+
+<br><br><br>
 electron 사용해서 만화뷰 만들어놔야겠다
 기간 3개월 생각
+
