@@ -7,13 +7,13 @@ const replace = require("./lib/replace");
 const { down } = require("./lib/down")
 
 //mana숫자 < 숫자부분 주기적으로 바꿔줘야하니 나중에 숫자만 입력할수있도록 바꿔줘야함
-let number = '49'
+let number = '50'
 
 // 중요한 아이디값 일단 기본적으로 정해둠
-let id = '1748'
+let id = '10970'
 
 //사용자가 원하는 다운로드 딜레이 속도 지정  컴퓨터 속도에 따라서 바꿔줌
-let DOWNLOAD_SPEED = 3;
+let DOWNLOAD_SPEED = 5;
 
 
 //첫주소
@@ -47,6 +47,8 @@ function createFolder(directory,name){//저장할곳, 이름
         fs.mkdirSync(dir) //디렉토리를 생성합니다
     }
 }
+
+
 
 //json createdfunction
 function createdJson(info){
@@ -132,41 +134,50 @@ function rtManaGaInfo(options){
 
             request(options,(err,response,body)=>{ 
 
-                if(err) console.log(err)
-        
-                //만약 에러나면
-                if(err) console.log('err',err)
-                
-                //더많은정보들을 넘겨줄수있다 검색)-managainfo
-                const $ = cheerio.load(body);
-                const $id = $('.slot > a'); //링크
-                const $chapterList = $('.slot > a >.title');//챕터리스트
-                const title = $('.manga-subject').first().text().trim()//제목
-                const mainImg = $('.manga-thumbnail').css('background-image')//메인 이미지
-                const $tag = $('.tag') // 태그 
-                const author = $('.author').text().trim() //작가 
-                const chapterCount = replace.fn($('.chapter-count').text()) //총 홧수
-                const publish_type = $('.publish_type').text()//주간,월간,완결
+                    //만약 에러나면
+                    if(err){
 
-                const option ={ //array로 받아야 할것들
-                    $:$,
-                    $chapterList:$chapterList,
-                    $id:$id,
-                    $tag:$tag,
-                    title:title //
+                        info = {
+                            state: false,
+                            url:url
+                        }
+
+
+                    }else{
+                        //더많은정보들을 넘겨줄수있다 검색)-managainfo
+                        const $ = cheerio.load(body);
+                        const $id = $('.slot > a'); //링크
+                        const $chapterList = $('.slot > a >.title');//챕터리스트
+                        const title = $('.manga-subject').first().text().trim()//제목
+                        const mainImg = $('.manga-thumbnail').css('background-image')//메인 이미지
+                        const $tag = $('.tag') // 태그 
+                        const author = $('.author').text().trim() //작가 
+                        const chapterCount = replace.fn($('.chapter-count').text()) //총 홧수
+                        const publish_type = $('.publish_type').text()//주간,월간,완결
+
+                        const option ={ //array로 받아야 할것들
+                            $:$,
+                            $chapterList:$chapterList,
+                            $id:$id,
+                            $tag:$tag,
+                            title:title //
+                        }
+                        
+                        const list = rtList(option)
+                    
+
+                        info = {
+                            title:title, //제목
+                            mainImg:mainImg, // 썸네일
+                            publish_type:publish_type, //완결 또는 주간 월간인지 표시해줌
+                            list:list, // 화제목+id값+태그
+                            author:author, //작가
+                            chapterCount:chapterCount ,//총홧수
+                            state:true//현재 링크 상태
+                        }
                 }
                 
-                const list = rtList(option)
-            
-
-                info = {
-                    title:title, //제목
-                    mainImg:mainImg, // 썸네일
-                    publish_type:publish_type, //완결 또는 주간 월간인지 표시해줌
-                    list:list, // 화제목+id값+태그
-                    author:author, //작가
-                    chapterCount:chapterCount //총홧수
-                }
+                
                 resolve(info)
             })
         }).then(function(result){
@@ -218,7 +229,7 @@ function imgsDownload({mainDir,title,chapterList,imgs,i,url,cdnList}){ // 이미
             const chk = new RegExp("filecdn.xyz");
 
             if(chk.test(changedImg)){
-              changedImg = changedImg.replace(chk,cdnList[c]).replace('"','').replace('"','')
+              changedImg = changedImg.replace(chk,cdnList[c]).replace('"','').replace('"','').replace("[",'').replace(/ /gi,"")
             }
 
             down(savedirList,changedImg,chapterList[i],c,url,5)
@@ -229,7 +240,12 @@ function imgsDownload({mainDir,title,chapterList,imgs,i,url,cdnList}){ // 이미
     }
 
 
+//subjectFaild 이미지가 로드가 안됬을때 함수
+function subjectFaild(URL,options,I){
 
+    
+
+}
 
     
 
@@ -249,6 +265,7 @@ function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
         for(let i = 0; i < ids.length; i++){
         
             setTimeout(()=>{
+
                 const id = ids[i]
                 const url = changeUrl(viewUrl,id)
             
@@ -256,7 +273,11 @@ function imgsLoad(info,options,mainDir){// 이미지들을 불러와주는함수
         
                 request(options,(err,response,body)=>{
                     
-                    if(err) console.log(err)
+                    if(err) {
+                        
+
+                        
+                    }
         
                     if(body.split('var img_list = ')[1]){
                         
@@ -293,15 +314,37 @@ function loadJson(PATH){
     
 }
 
+//경로 확인 함수
+function checkPath(PATH){
+
+    if(!fs.existsSync(PATH)){
+        console.log('경로에 폴더가 없습니다.')
+    }
+
+}
+
+
 // function init()
 async function init(){
     //함수 시작부분
     try{
         const info = await rtManaGaInfo(options) // 만화정보를 리턴해줌
-        await createdJson(info) // 그걸사용하여 json 파일에 정보 담아주기
-        await imgsLoad(info,options,mainDir)// 정보와 request 옵션과 디렉토리 정보를 줍시다.
 
-    }
+        if(info.state === true){ // 만약 상태가 undefined 
+
+            await createdJson(info) // 그걸사용하여 json 파일에 정보 담아주기
+            await imgsLoad(info,options,mainDir)// 정보와 request 옵션과 디렉토리 정보를 줍시다.
+ 
+        }
+        
+        else{
+            console.log('faild')
+        }
+
+        
+
+
+    }         
     catch(err){
         console.log(err)
     }
@@ -312,7 +355,9 @@ async function init(){
 /*
 오류 적어두는곳
 
-1.태그 오류 중간에 \n 문자 그후 태그가 한번더 들어감 나중에 태그 사용할일 있을때 확인해주면 될 것 같음
+1.태그 오류 중간에 \n 문자 그후 태그가 한번더 들어감 나중에 태그 사용할일 있을때 확인해주면 될 것 같음 해결
+2.이미지 링크 중간에 [ 문자 들어간거 제거 해결
+    
 
 
 */
