@@ -59,20 +59,27 @@ function createdJson(info){
     createFolder(dir,mkTitle)//먼저 폴더가 없다면 만들어줍니다.
 
     const inJson = dir+'/'+mkTitle
-    saveJson(info,inJson)//Json 파일로 변환후 폴더에 저장합니다.
+    saveJson(info,inJson,'/mangaInfo.json')//Json 파일로 변환후 폴더에 저장합니다.
 }
 
 
 //create Obj to json file function
-function saveJson(info,dir){
-   
+function saveJson(info,dir,name){
+
     const jsonFild =  JSON.stringify(info) //json 파일로 변환후
-    
-    const name = '/mangaInfo.json' //이름 지정
+
+
+    //
+    // const name = '/mangaInfo.json' //이름 지정
+    //
+
 
     fs.writeFile(dir+name, jsonFild,(err,result)=>{ // writeFile 사용하여 json 파일 만들기
+
         if(err) console.log('errer',err)
+
     });
+
 }
 
 //array 형식으로 추출해줌 
@@ -357,7 +364,7 @@ async function init(){
 
 1.태그 오류 중간에 \n 문자 그후 태그가 한번더 들어감 나중에 태그 사용할일 있을때 확인해주면 될 것 같음 해결
 2.이미지 링크 중간에 [ 문자 들어간거 제거 해결
-    
+
 
 
 */
