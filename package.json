@@ -1,0 +1,21 @@
+{
+  "name": "manamoacrawling-master",
+  "version": "1.0.0",
+  "description": "request 랑 cheerio",
+  "main": "main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "filenamify": "^4.1.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
